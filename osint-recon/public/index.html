@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="OSINT Recon Console: enter a name, username, email, phone, IP or domain and query free OSINT sources.">
+  <meta name="referrer" content="no-referrer">
+  <title>OSINT RECON CONSOLE</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%230a0a0a'/%3E%3Ctext x='2' y='12' font-size='11' font-family='monospace' fill='%2300ff41'%3E%3E_%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="scanlines" aria-hidden="true"></div>
+  <div class="scan-bar" aria-hidden="true"></div>
+
+  <main class="page">
+    <section class="hero" id="hero">
+      <header class="masthead">
+        <pre class="logo" aria-hidden="true">
+  ___  ___ ___ _  _ _____   ___ ___ ___ ___  _  _ 
+ / _ \/ __|_ _| \| |_   _| | _ \ __/ __/ _ \| \| |
+| (_) \__ \| || .` | | |   |   / _| (_| (_) | .` |
+ \___/|___/___|_|\_| |_|   |_|_\___\___\___/|_|\_|
+</pre>
+        <h1 class="title">OSINT RECON CONSOLE<span class="blink">_</span></h1>
+        <p class="boot" id="boot" aria-live="polite"></p>
+      </header>
+
+      <form id="search-form" class="search" autocomplete="off" novalidate>
+        <label class="sr-only" for="query">Target identifier</label>
+        <div class="input-row">
+          <span class="prompt" aria-hidden="true">root@recon:~$</span>
+          <input
+            id="query"
+            name="query"
+            type="text"
+            class="target-input"
+            placeholder="[ enter target: name, email, username, phone, IP, domain... ]"
+            maxlength="200"
+            spellcheck="false"
+            autocapitalize="off"
+            autocorrect="off"
+            autocomplete="off"
+            required
+          >
+        </div>
+
+        <div class="controls">
+          <label class="mode">
+            <span>MODE</span>
+            <select id="mode" name="type" aria-label="Input type">
+              <option value="auto">AUTO-DETECT</option>
+              <option value="name">name</option>
+              <option value="username">username</option>
+              <option value="email">email</option>
+              <option value="phone">phone</option>
+              <option value="ip">IP address</option>
+              <option value="domain">domain</option>
+            </select>
+          </label>
+          <button type="submit" id="execute" class="execute">&gt; EXECUTE</button>
+        </div>
+
+        <p id="form-error" class="message error" role="alert" hidden></p>
+        <p id="form-hint" class="message hint">Auto-detection maps input to: name, username, email, phone, IP or domain. Use MODE to override.</p>
+      </form>
+    </section>
+
+    <section id="results" class="results" aria-live="polite" hidden>
+      <div id="loader" class="loader" hidden>
+        <pre class="spinner" id="spinner" aria-label="Scanning">[■□□□□□□□□□] SCANNING...</pre>
+        <p class="message hint" id="loader-note">Querying sources in parallel. Username searches can take up to a few minutes.</p>
+      </div>
+
+      <div id="summary" class="summary" hidden></div>
+
+      <div class="toolbar" id="toolbar" hidden>
+        <label class="filter">
+          <span>FILTER&gt;</span>
+          <input id="filter" type="search" placeholder="type to filter rows..." autocomplete="off" spellcheck="false">
+        </label>
+        <button type="button" id="export" class="btn-small">EXPORT JSON</button>
+      </div>
+
+      <div class="table-wrap" id="table-wrap" hidden>
+        <table class="results-table" id="results-table">
+          <caption class="sr-only">OSINT findings</caption>
+          <colgroup>
+            <col class="c-source">
+            <col class="c-type">
+            <col class="c-detail">
+            <col class="c-link">
+          </colgroup>
+          <thead>
+            <tr>
+              <th scope="col">Source</th>
+              <th scope="col">Type</th>
+              <th scope="col">Detail</th>
+              <th scope="col">Link</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+        <p class="message hint" id="no-rows" hidden>No rows match the current filter.</p>
+      </div>
+
+      <details class="sources-panel" id="sources-panel" hidden>
+        <summary>SOURCE STATUS</summary>
+        <ul id="sources-list" class="sources-list"></ul>
+      </details>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>FOR EDUCATIONAL / AUTHORIZED USE ONLY. ALL QUERIES LOGGED LOCALLY.</p>
+  </footer>
+
+  <script src="script.js" defer></script>
+</body>
+</html>

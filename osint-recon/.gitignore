@@ -1,0 +1,11 @@
+# Dependencies
+node_modules/
+
+# Runtime data: query log, WhatsMyName dataset cache
+data/
+*.log
+
+# Secrets: API keys belong in the environment or a local .env file
+.env
+.env.*
+!.env.example
