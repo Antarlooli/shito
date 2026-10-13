@@ -2,7 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { parseSherlockOutput, parseMaigretReport, wmnMatches } = require('../src/sources/username');
+const { parseSherlockOutput, parseSherlockResults, parseMaigretReport, wmnMatches } = require('../src/sources/username');
 const { parseHoleheOutput, isNullMx } = require('../src/sources/email');
 const { registrarName, extractSubdomains } = require('../src/sources/domain');
 const { isPublicIPv4 } = require('../src/sources/ip');
@@ -132,4 +132,22 @@ test('MX: null MX records (RFC 7505) are recognised', () => {
   assert.equal(isNullMx({ exchange: '', priority: 0 }), true);
   assert.equal(isNullMx({ exchange: '.', priority: 0 }), true);
   assert.equal(isNullMx({ exchange: 'mx.example.net', priority: 10 }), false);
+});
+
+test('Sherlock: --print-all output separates misses from unreachable sites', () => {
+  const stdout = [
+    '[*] Checking username tinaamazon on:',
+    '[+] [0.31s] GitHub: https://github.com/tinaamazon',
+    '[-] Reddit: Error Connecting',
+    '[-] Pinterest: Error Connecting',
+    '[-] Instagram: Not Found!',
+    '[-] Weird: Illegal Username Format For This Site!',
+    '[*] Search completed with 1 results',
+  ].join('\n');
+  const parsed = parseSherlockResults(stdout);
+  assert.equal(parsed.hits.length, 1);
+  assert.equal(parsed.hits[0].name, 'GitHub');
+  assert.equal(parsed.checked, 5);
+  assert.equal(parsed.unreachable, 2); // "Illegal Username Format" is a per-site rejection, not a network failure
+  assert.deepEqual(parseSherlockOutput(stdout), parsed.hits);
 });

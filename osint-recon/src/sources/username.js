@@ -13,17 +13,39 @@ const TYPE = 'username';
 
 const SHERLOCK_LINE = /^\[\+\]\s*(?:\[[^\]]*\]\s*)?(.+?):\s+(https?:\/\/\S+)\s*$/;
 
+// Not-found and failed sites are printed with "[-]". Failures say "Error Connecting",
+// "Illegal Username Format", "Unknown", etc. Plain "Not Found!" is a normal miss.
+const SHERLOCK_MISS_LINE = /^\[-\]\s*(?:\[[^\]]*\]\s*)?(.+?):\s+(.*)$/;
+const SHERLOCK_FAILURE = /error|unknown|blocked|waf|timeout|unavailable/i;
+
 /**
- * Parses `sherlock --print-found --no-color` stdout.
+ * Parses `sherlock --print-all --no-color` stdout.
  * Found lines look like: `[+] GitHub: https://github.com/torvalds`
+ * Returns { hits, checked, unreachable } so callers can tell "nothing found" from "could not check".
  */
-function parseSherlockOutput(stdout) {
+function parseSherlockResults(stdout) {
   const hits = [];
+  let checked = 0;
+  let unreachable = 0;
   for (const line of String(stdout).split(/\r?\n/)) {
-    const m = SHERLOCK_LINE.exec(line.trim());
-    if (m) hits.push({ name: m[1].trim(), url: m[2].trim() });
+    const trimmed = line.trim();
+    const found = SHERLOCK_LINE.exec(trimmed);
+    if (found) {
+      hits.push({ name: found[1].trim(), url: found[2].trim() });
+      checked += 1;
+      continue;
+    }
+    const miss = SHERLOCK_MISS_LINE.exec(trimmed);
+    if (miss) {
+      checked += 1;
+      if (SHERLOCK_FAILURE.test(miss[2])) unreachable += 1;
+    }
   }
-  return hits;
+  return { hits, checked, unreachable };
+}
+
+function parseSherlockOutput(stdout) {
+  return parseSherlockResults(stdout).hits;
 }
 
 /** Last line of `text` matching `pattern`, or '' when there is none. */
@@ -41,7 +63,7 @@ async function runSherlock(ctx) {
       config.bins.sherlock,
       [
         query,
-        '--print-found',
+        '--print-all',
         '--no-color',
         '--timeout', String(config.sherlockTimeoutSec),
         ...(config.sherlockLocal ? ['--local'] : []),
@@ -52,7 +74,7 @@ async function runSherlock(ctx) {
     if (err.code === 'ENOENT') return [notInstalled(source, TYPE, config.bins.sherlock, 'pip install sherlock-project')];
     throw err;
   }
-  const hits = parseSherlockOutput(res.stdout);
+  const { hits, checked, unreachable } = parseSherlockResults(res.stdout);
   if (hits.length === 0) {
     // Sherlock reports failures on stdout as "ERROR: ..." lines, and exits non-zero when it cannot run.
     const errorLine = lastLine(res.stdout, /^ERROR:/) || lastLine(res.stderr, /error/i);
@@ -62,9 +84,14 @@ async function runSherlock(ctx) {
       return [errorRow(source, TYPE, `Sherlock failed: ${reason}`)];
     }
   }
+  // Most sites unreachable means the server (not the sites) is blocked, so say so instead of "0 found".
+  const mostlyUnreachable = checked > 0 && unreachable / checked > 0.5;
+  const text =
+    `Checked ${checked} sites: ${hits.length} account(s) found` +
+    (unreachable ? `, ${unreachable} unreachable` : '');
   return [
-    summary(source, TYPE, `Checked username across Sherlock site list: ${hits.length} account(s) found`, {
-      status: hits.length ? 'info' : 'miss',
+    summary(source, TYPE, mostlyUnreachable && !hits.length ? `${text}. Most requests failed; check outbound connectivity` : text, {
+      status: hits.length ? 'info' : mostlyUnreachable ? 'error' : 'miss',
       link: 'https://github.com/sherlock-project/sherlock',
     }),
     ...hitRows(source, TYPE, hits, { detailPrefix: 'Account found' }),
@@ -297,6 +324,7 @@ function _resetWmnCache() {
 module.exports = {
   _resetWmnCache,
   parseSherlockOutput,
+  parseSherlockResults,
   parseMaigretReport,
   wmnMatches,
   checkWmnSite,
