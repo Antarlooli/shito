@@ -110,6 +110,7 @@ Every variable is optional. See `.env.example` for the full list.
 | `RATE_LIMIT_MAX`, `RATE_LIMIT_WINDOW_MS` | `10`, `60000` | Searches per client IP per window |
 | `SOURCE_TIMEOUT_MS` | `25000` | Default per-source timeout |
 | `CLI_TIMEOUT_MS` | `240000` | Timeout for each Python CLI |
+| `SHERLOCK_LOCAL` | `1` | Use Sherlock's bundled site data. Set `0` to download the latest data |
 | `MAIGRET_TOP_SITES` | `100` | Sites checked by Maigret (its own default is 500) |
 | `WMN_CONCURRENCY`, `WMN_BUDGET_MS` | `25`, `90000` | WhatsMyName parallelism and total time budget |
 | `CACHE_TTL_MS` | `600000` | Cache for rate-limited sources |

@@ -45,6 +45,19 @@ test('Sherlock wrapper: parses the CLI output into hit rows', async () => {
   assert.equal(rows[0].source, 'Sherlock');
 });
 
+test('Sherlock wrapper: passes --local by default and omits it when disabled', async () => {
+  const argsFile = path.join(tmp, 'sherlock-args.json');
+  const bin = fakeScript(
+    'fake-sherlock-args',
+    `require('fs').writeFileSync(${JSON.stringify(argsFile)}, JSON.stringify(process.argv.slice(2)));`,
+  );
+  await username.runSherlock({ query: 'x', type: 'username', config: testConfig({ bins: { sherlock: bin } }) });
+  assert.ok(JSON.parse(fs.readFileSync(argsFile, 'utf8')).includes('--local'));
+
+  await username.runSherlock({ query: 'x', type: 'username', config: testConfig({ bins: { sherlock: bin }, sherlockLocal: false }) });
+  assert.ok(!JSON.parse(fs.readFileSync(argsFile, 'utf8')).includes('--local'));
+});
+
 test('Sherlock wrapper: missing binary yields a "not installed" skip row', async () => {
   const rows = await username.runSherlock({
     query: 'torvalds',

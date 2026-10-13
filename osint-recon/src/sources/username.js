@@ -39,7 +39,13 @@ async function runSherlock(ctx) {
   try {
     res = await runCli(
       config.bins.sherlock,
-      [query, '--print-found', '--no-color', '--timeout', String(config.sherlockTimeoutSec)],
+      [
+        query,
+        '--print-found',
+        '--no-color',
+        '--timeout', String(config.sherlockTimeoutSec),
+        ...(config.sherlockLocal ? ['--local'] : []),
+      ],
       { timeoutMs: config.cliTimeoutMs },
     );
   } catch (err) {

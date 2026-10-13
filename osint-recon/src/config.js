@@ -41,6 +41,9 @@ const config = {
   },
   cliTimeoutMs: int(env.CLI_TIMEOUT_MS, 240_000),
   sherlockTimeoutSec: int(env.SHERLOCK_TIMEOUT_SEC, 10),
+  // Sherlock uses the data.json bundled with its package by default. Its remote data download
+  // fails on networks that block data.sherlockproject.xyz. Set SHERLOCK_LOCAL=0 to fetch remotely.
+  sherlockLocal: env.SHERLOCK_LOCAL !== '0',
   maigretTopSites: int(env.MAIGRET_TOP_SITES, 100),
 
   // WhatsMyName site definitions.
